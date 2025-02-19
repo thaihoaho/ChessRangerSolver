@@ -7,6 +7,7 @@ from move import legal_move
 import time
 import config
 import vlc  
+import sys
 
 def testcase(num_tests, size):
     with open("tests/test" + str(size) + ".txt", "r", encoding="utf-8") as file:
@@ -105,7 +106,7 @@ def draw_chessboard_with_background_and_pieces(pieces):
             solve_sound.stop()
             solve_sound.play()
             return True
-        for (row, col), piece in pieces.items():
+        for (row, col), piece_id in pieces.items():
             target = filter_moves(row, col, pieces)
             if not target:
                 continue
@@ -116,31 +117,16 @@ def draw_chessboard_with_background_and_pieces(pieces):
                 child = copy.deepcopy(pieces)
                 piece_name = id_to_name[child[(row, col)]].capitalize()
                 target_name = id_to_name[child[(target_x, target_y)]].capitalize()
-                
                 child[(target_x, target_y)] = child.pop((row, col))
-                
                 if solve(child, start_time, solution, depth + 1):
                     solution.append("   " * depth + f"{piece_name}{num_to_char_col[col]}{8-row} x {target_name}{num_to_char_col[target_y]}{8-target_x}")
-                    return True
+                    return True     
         return False
                 
     def filter_moves(row, col, board):
-        all_legal_move = legal_move(id_to_name[board[(row, col)]], col, row)
-        filtered = []
-        for (board_row, board_col) in board:
-            if all_legal_move is not None and (board_col, board_row) in all_legal_move:
-                filtered.append((board_row, board_col))
         
-        cell_size = (canvas.winfo_width() // 8)  
-        for (board_row, board_col) in filtered:
-            x1 = board_col * cell_size
-            y1 = board_row * cell_size
-            x2 = x1 + cell_size
-            y2 = y1 + cell_size
-            
-        return(filtered)
-        print(filtered, end="#\n")
-
+        return legal_move(id_to_name[board[(row, col)]], col, row, board)
+    
     def on_drag_motion(event):
         delta_x = event.x - drag_data["start_x"]
         delta_y = event.y - drag_data["start_y"]
@@ -177,6 +163,8 @@ def draw_chessboard_with_background_and_pieces(pieces):
                 
     def on_key_press(event):
         if event.keysym == "Return":
+            print("Solving: ",end="")
+
             solution = []
             solve(pieces_on_board, time.time(), solution)
             while solution:

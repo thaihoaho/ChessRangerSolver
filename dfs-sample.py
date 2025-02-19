@@ -15,7 +15,7 @@ import time
 from move import legal_move
 
 def filter_moves(row, col, board):
-    all_legal_move = legal_move(id_to_name[board[(row, col)]], col, row)
+    all_legal_move = legal_move(id_to_name[board[(row, col)]], col, row, board)
     filtered = []
     for (board_row, board_col) in board:
         if all_legal_move is not None and (board_col, board_row) in all_legal_move:
