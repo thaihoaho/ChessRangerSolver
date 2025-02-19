@@ -9,6 +9,7 @@
   ```
 Chạy chương trình:  
 `python main.py`  
+Thay đổi số quân cờ bằng biến SIZE trong config.py
 
 Hỗ trợ:  
 - Nạp puzzle ngẫu nhiên từ bộ testcases.  
