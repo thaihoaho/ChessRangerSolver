@@ -14,10 +14,9 @@ Chạy chương trình:
   
 *Thay đổi số quân cờ bằng biến SIZE trong config.py*
   
-Hỗ trợ:
-    - Nạp puzzle ngẫu nhiên từ bộ testcases.
-    - Kéo thả để giải puzzle.
-    - Giải puzzle bằng DFS: sau khi chạy main.py, nhấn ENTER.
-    - Lấy thêm testcase lưu vào tests/ (ancap từ web):
-    
-       ` python getTest.py --size <số quân cờ (4-11)> --num_test <số lượng testcase>`
+Hỗ trợ:  
+- Nạp puzzle ngẫu nhiên từ bộ testcases.
+- Kéo thả để giải puzzle.
+- Giải puzzle bằng DFS: sau khi chạy main.py, nhấn ENTER.
+- Lấy thêm testcase lưu vào tests/ (ancap từ web):     
+   `python getTest.py --size <số quân cờ (4-11)> --num_test <số lượng testcase>`
