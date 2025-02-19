@@ -6,6 +6,7 @@ import copy
 from move import legal_move
 import time
 import config
+import vlc  
 
 def testcase(num_tests, size):
     with open("tests/test" + str(size) + ".txt", "r", encoding="utf-8") as file:
@@ -16,13 +17,22 @@ def testcase(num_tests, size):
         number = random.randint(0, 100)
         print('/' * 20, f'Testcase {number}','/' * 20)
         draw_chessboard_with_background_and_pieces(matrices[number])
+
 pieces_on_board = {}
 id_to_name = {}
 num_to_char_col = {i: chr(97 + i) for i in range(8)}
 
+capture_sound = vlc.MediaPlayer("assets/capture.mp3")
+solve_sound = vlc.MediaPlayer("assets/solve.mp3")
+start_sound = vlc.MediaPlayer("assets/game-start.mp3")
+end_sound = vlc.MediaPlayer("assets/game-end.mp3")
+
 def draw_chessboard_with_background_and_pieces(pieces):
     root = tk.Tk()
     root.title("Bàn cờ với nền và quân cờ")
+    start_sound.stop()
+    root.after(300, lambda: (start_sound.stop(), start_sound.play()))  
+
     initial_width, initial_height = 682, 682
     root.geometry(f"{initial_width}x{initial_height}+0+0")
     canvas = tk.Canvas(root, width=initial_width, height=initial_height)
@@ -92,6 +102,8 @@ def draw_chessboard_with_background_and_pieces(pieces):
         if len(pieces) == 1:
             elapsed_time = time.time() - start_time
             print(f"FOUND - Time: {elapsed_time:.6f} seconds")
+            solve_sound.stop()
+            solve_sound.play()
             return True
         for (row, col), piece in pieces.items():
             target = filter_moves(row, col, pieces)
@@ -151,8 +163,13 @@ def draw_chessboard_with_background_and_pieces(pieces):
                     old_piece_id = pieces_on_board[(row, col)]
                     canvas.delete(old_piece_id)
                 pieces_on_board[(row, col)] = piece_id
-                
-                if len(pieces_on_board) == 1:
+
+                if len(pieces_on_board) != 1:
+                    capture_sound.stop()
+                    capture_sound.play()  
+                else:
+                    end_sound.stop()
+                    end_sound.play()
                     pieces_on_board.clear()
                     id_to_name.clear()
                     root.after(500, root.destroy) 
