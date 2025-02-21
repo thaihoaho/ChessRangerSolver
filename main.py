@@ -8,6 +8,8 @@ import time
 import config
 import vlc  
 import sys
+import heapq
+
 
 def testcase(num_tests, size):
     with open("tests/test" + str(size) + ".txt", "r", encoding="utf-8") as file:
@@ -27,15 +29,17 @@ capture_sound = vlc.MediaPlayer("assets/capture.mp3")
 solve_sound = vlc.MediaPlayer("assets/solve.mp3")
 start_sound = vlc.MediaPlayer("assets/game-start.mp3")
 end_sound = vlc.MediaPlayer("assets/game-end.mp3")
+dfs_time = None
+a_star_time = None
 
 def draw_chessboard_with_background_and_pieces(pieces):
     root = tk.Tk()
     root.title("Bàn cờ với nền và quân cờ")
-    start_sound.stop()
-    root.after(300, lambda: (start_sound.stop(), start_sound.play()))  
+    # start_sound.stop()
+    # root.after(300, lambda: (start_sound.stop(), start_sound.play()))  
 
     initial_width, initial_height = 682, 682
-    root.geometry(f"{initial_width}x{initial_height}+0+0")
+    root.geometry(f"{initial_width}x{initial_height}+700+0")
     canvas = tk.Canvas(root, width=initial_width, height=initial_height)
     canvas.pack(fill=tk.BOTH, expand=True)
     board_img_original = Image.open("assets/board_image.png")
@@ -57,6 +61,7 @@ def draw_chessboard_with_background_and_pieces(pieces):
     drag_data = {"piece_id": None, "start_x": 0, "start_y": 0}
 
     def resize(event):
+        id_to_name.clear()
         if canvas.winfo_width() == 0:
             return
         canvas_width = event.width
@@ -84,6 +89,7 @@ def draw_chessboard_with_background_and_pieces(pieces):
                     piece_coords = canvas.coords(piece_id)
                     col = int((piece_coords[0]) // cell_size)
                     row = int((piece_coords[1]) // cell_size)
+
                     id_to_name[piece_id] = piece
                     pieces_on_board[(row, col)] = piece_id
                     canvas.images[f"{piece}_{i}_{j}"] = piece_photo
@@ -99,12 +105,12 @@ def draw_chessboard_with_background_and_pieces(pieces):
         if key_to_delete is not None:
             del pieces_on_board[key_to_delete]
 
-    def solve(pieces, start_time, solution, depth=0):
+    def dfs(pieces, start_time, solution, depth=1):
+        global dfs_time
         if len(pieces) == 1:
-            elapsed_time = time.time() - start_time
-            print(f"FOUND - Time: {elapsed_time:.6f} seconds")
-            solve_sound.stop()
-            solve_sound.play()
+            dfs_time = time.time() - start_time
+            # solve_sound.stop()
+            # solve_sound.play()
             return True
         for (row, col), piece_id in pieces.items():
             target = filter_moves(row, col, pieces)
@@ -118,13 +124,74 @@ def draw_chessboard_with_background_and_pieces(pieces):
                 piece_name = id_to_name[child[(row, col)]].capitalize()
                 target_name = id_to_name[child[(target_x, target_y)]].capitalize()
                 child[(target_x, target_y)] = child.pop((row, col))
-                if solve(child, start_time, solution, depth + 1):
+                if dfs(child, start_time, solution, depth + 1):
                     solution.append("   " * depth + f"{piece_name}{num_to_char_col[col]}{8-row} x {target_name}{num_to_char_col[target_y]}{8-target_x}")
                     return True     
         return False
-                
+    
+
+    def A_star(board, start_time):
+        global a_star_time
+        open_set = []
+        initial_state = frozenset(board.items())  
+        heapq.heappush(open_set, (0, initial_state))
+
+        came_from = {}
+        g_score = {initial_state: 0}
+
+        while open_set:
+            _, current_state = heapq.heappop(open_set)
+            
+            if len(current_state) == 1:
+                a_star_time = time.time() - start_time
+                return reconstruct_path(came_from, current_state)
+
+            for (row, col), piece_id in current_state:
+                target_positions = filter_moves(row, col, dict(current_state))  
+
+                for (target_x, target_y) in target_positions:
+                    tentative_g = g_score[current_state] + 1
+                    child = dict(current_state)  
+                    
+                    piece_name = id_to_name[child[(row, col)]].capitalize()
+                    target_name = id_to_name[child[(target_x, target_y)]].capitalize()
+                    child[(target_x, target_y)] = child.pop((row, col))  
+
+                    child_state = frozenset(child.items())  
+
+                    if child_state not in g_score:
+                        came_from[child_state] = (current_state, f"{piece_name}{num_to_char_col[col]}{8-row} x {target_name}{num_to_char_col[target_y]}{8-target_x}")
+                        g_score[child_state] = tentative_g
+                        h_score = count_isolated_pieces(child)  
+                        f_score = tentative_g + h_score
+
+                        heapq.heappush(open_set, (f_score, child_state))  
+        return None
+
+    def reconstruct_path(came_from, state):
+        path = []
+        while state in came_from:
+            path.append(came_from[state][1])
+            state = came_from[state][0]
+        path.reverse()
+        return path
+    
+    def count_isolated_pieces(board):
+        s = 0
+        for (row, col), piece_id in board.items():
+            if len(filter_moves(row, col, board)) == 0: #khong an duoc quan nao
+                is_isolated = True 
+                for (other_row, other_col), x in board.items():
+                    if (other_row == row) and (other_col == col):
+                       continue
+                    if (row, col) in filter_moves(other_row, other_col, board): #Co 1 quan nao an duoc
+                        is_isolated = False 
+                        break
+                if is_isolated:
+                    s+=1
+        return s
+
     def filter_moves(row, col, board):
-        
         return legal_move(id_to_name[board[(row, col)]], col, row, board)
     
     def on_drag_motion(event):
@@ -139,8 +206,8 @@ def draw_chessboard_with_background_and_pieces(pieces):
         if piece_id:
             piece_coords = canvas.coords(piece_id)
             cell_size = (canvas.winfo_width() // 8)
-            col = (piece_coords[0]) // cell_size
-            row = (piece_coords[1]) // cell_size
+            col = int((piece_coords[0]) // cell_size)
+            row = int((piece_coords[1]) // cell_size)
             if 0 <= row < 8 and 0 <= col < 8:
                 x = col * cell_size + cell_size // 2
                 y = row * cell_size + cell_size // 2
@@ -154,24 +221,47 @@ def draw_chessboard_with_background_and_pieces(pieces):
                     capture_sound.stop()
                     capture_sound.play()  
                 else:
-                    end_sound.stop()
-                    end_sound.play()
+                    # end_sound.stop()
+                    # end_sound.play()
                     pieces_on_board.clear()
                     id_to_name.clear()
                     root.after(500, root.destroy) 
                     return
                 
-    def on_key_press(event):
-        if event.keysym == "Return":
-            print("Solving: ",end="")
+    def on_key_press(event=None):
+        global dfs_time
+        global a_star_time 
+        if event and event.keysym != "Return":
+            return 
+        print("Solving...", flush=True)
 
-            solution = []
-            solve(pieces_on_board, time.time(), solution)
-            while solution:
-                print(solution.pop())
+        solution = []
+        s=0
+        for i in range(10):
+            solution=[]
+            dfs(pieces_on_board, time.time(), solution)
+            s+=dfs_time
+            dfs_time=0
+        dfs_time=s/10
+        print(f"‣ DFS : {dfs_time:.6f} seconds")
+        while solution:
+            print(f"{solution.pop()}")
+       
+        s=0
+        for i in range(10):
+            solution=A_star(pieces_on_board, time.time())
+            s+=a_star_time
+            a_star_time=0
+        a_star_time=s/10
+        print(f"A* : {a_star_time:.6f} seconds")
+
+        for depth, move in enumerate(solution):
+            indent=depth+1
+            print(" " * (indent * 3) + move)
 
     root.bind("<Return>", on_key_press)
     root.bind("<Configure>", resize)
+    root.after(500, lambda: on_key_press(None)) 
     root.mainloop()
 
 testcase(config.NUM_TEST, config.SIZE)

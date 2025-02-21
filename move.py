@@ -34,8 +34,6 @@ def rook_moves(col, row, board):
 
     return moves
 
-
-
 def bishop_moves(col, row, board):
     moves = []
     for c, r in zip(range(col + 1, 8), range(row + 1, 8)):
