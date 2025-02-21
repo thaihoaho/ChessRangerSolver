@@ -1,12 +1,12 @@
 📂 ChessRangerSolver  
 ```
-│── main.py          # File chính  
+│── main.py          # File chính
 │── move.py          # Xử lý nước đi  
 │── config.py        # Cấu hình main  
-│── getTest.py       # Lấy testcase  
-│── log.txt          # Giải tất cả testcase bằng main.py  
-│── assets/          # Ảnh bàn cờ & quân cờ  
-│── testcases/       # Chứa tests từ 4 đến 11 quân cờ  
+│── getTest.py       # Lấy testcase từ testcase/  
+│── log.txt          # Lời của tất cả testcase tạo bằng main.py  
+│── testcases/       # Chứa các file tests từ 4 đến 11 quân cờ, mỗi file chứa 100 testcases  
+│── assets/          # Ảnh bàn cờ, quân cờ & âm thanh  
 │── dfs-sample.py    # File nháp  
 
   ```
