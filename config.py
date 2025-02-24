@@ -1,5 +1,5 @@
-NUM_TEST = 1
-SIZE = 10
+NUM_TEST = 3
+SIZE = 11
 
 # from main import testcase
 

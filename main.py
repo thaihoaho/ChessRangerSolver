@@ -1,13 +1,12 @@
 import tkinter as tk
 from PIL import Image, ImageTk
-import subprocess
 import random
 import copy
 from move import legal_move
 import time
 import config
 import vlc  
-import sys
+
 import heapq
 
 
@@ -24,6 +23,7 @@ def testcase(num_tests, size):
 pieces_on_board = {}
 id_to_name = {}
 num_to_char_col = {i: chr(97 + i) for i in range(8)}
+unformatted_solution=[]
 
 capture_sound = vlc.MediaPlayer("assets/capture.mp3")
 solve_sound = vlc.MediaPlayer("assets/solve.mp3")
@@ -33,9 +33,9 @@ dfs_time = None
 a_star_time = None
 
 def draw_chessboard_with_background_and_pieces(pieces):
+    global unformated_solution
     root = tk.Tk()
-    root.title("Bàn cờ với nền và quân cờ")
-    # start_sound.stop()
+    root.title("Chess Ranger")
     # root.after(300, lambda: (start_sound.stop(), start_sound.play()))  
 
     initial_width, initial_height = 682, 682
@@ -105,7 +105,7 @@ def draw_chessboard_with_background_and_pieces(pieces):
         if key_to_delete is not None:
             del pieces_on_board[key_to_delete]
 
-    def dfs(pieces, start_time, solution, depth=1):
+    def dfs(pieces, start_time, solution, unformatted_solution, depth=1):
         global dfs_time
         if len(pieces) == 1:
             dfs_time = time.time() - start_time
@@ -124,7 +124,8 @@ def draw_chessboard_with_background_and_pieces(pieces):
                 piece_name = id_to_name[child[(row, col)]].capitalize()
                 target_name = id_to_name[child[(target_x, target_y)]].capitalize()
                 child[(target_x, target_y)] = child.pop((row, col))
-                if dfs(child, start_time, solution, depth + 1):
+                if dfs(child, start_time, solution, unformatted_solution, depth + 1):
+                    unformatted_solution.append((row, col, target_x, target_y))
                     solution.append("   " * depth + f"{piece_name}{num_to_char_col[col]}{8-row} x {target_name}{num_to_char_col[target_y]}{8-target_x}")
                     return True     
         return False
@@ -215,53 +216,104 @@ def draw_chessboard_with_background_and_pieces(pieces):
                 if (row, col) in pieces_on_board:
                     old_piece_id = pieces_on_board[(row, col)]
                     canvas.delete(old_piece_id)
+                    capture_sound.stop()
+                    capture_sound.play() 
+
                 pieces_on_board[(row, col)] = piece_id
 
-                if len(pieces_on_board) != 1:
-                    capture_sound.stop()
-                    capture_sound.play()  
-                else:
-                    # end_sound.stop()
-                    # end_sound.play()
-                    pieces_on_board.clear()
-                    id_to_name.clear()
-                    root.after(500, root.destroy) 
+                if len(pieces_on_board) == 1:
+                    root.after(200, lambda: (end_sound.stop(), end_sound.play()))  
+                    on_close(True)
                     return
                 
-    def on_key_press(event=None):
+    def on_key_press(event=None, each=10):
         global dfs_time
         global a_star_time 
+        global unformated_solution
         if event and event.keysym != "Return":
             return 
         print("Solving...", flush=True)
 
         solution = []
+
         s=0
-        for i in range(10):
+        for i in range(each):
             solution=[]
-            dfs(pieces_on_board, time.time(), solution)
+            dfs(pieces_on_board, time.time(), solution, unformatted_solution)
             s+=dfs_time
             dfs_time=0
-        dfs_time=s/10
+        dfs_time=s/each
+        if not solution:
+            print("Not found solution")
+            return
         print(f"‣ DFS : {dfs_time:.6f} seconds")
         while solution:
             print(f"{solution.pop()}")
-       
+        print(unformatted_solution)
+        
         s=0
-        for i in range(10):
+        for i in range(each):
             solution=A_star(pieces_on_board, time.time())
             s+=a_star_time
             a_star_time=0
-        a_star_time=s/10
+        a_star_time=s/each
         print(f"A* : {a_star_time:.6f} seconds")
 
         for depth, move in enumerate(solution):
             indent=depth+1
             print(" " * (indent * 3) + move)
 
-    root.bind("<Return>", on_key_press)
+    root.bind("<Return>", lambda event: on_key_press(event, each=1))
+    root.bind("<space>", lambda event: animate_solution(list(reversed(unformatted_solution))))
     root.bind("<Configure>", resize)
-    root.after(500, lambda: on_key_press(None)) 
+    root.after(500, lambda: on_key_press(None, each=1)) 
+
+    def on_close(wait=False):
+        global pieces_on_board, id_to_name, dfs_time, a_star_time, unformated_solution
+        pieces_on_board.clear()
+        id_to_name.clear()
+        unformatted_solution.clear()
+        dfs_time = None
+        a_star_time = None
+        if wait:
+            root.after(500, root.destroy)
+        else:
+            root.destroy()
+
+    def animate_solution(solution, index=0):
+        if not solution:
+            print("Solving")
+            return
+        if index >= len(solution):
+            solve_sound.stop()
+            solve_sound.play()
+            on_close()
+            return
+
+        move = solution[index]
+        start_row, start_col, target_row, target_col = move
+        
+        piece_id = pieces_on_board[(start_row, start_col)]
+        step_x = (target_col - start_col) * (canvas.winfo_width() / 8 ) / 10
+        step_y = (target_row - start_row) * (canvas.winfo_height() / 8 ) / 10
+
+        def step_animation(step=0):
+            if step < 10:
+                canvas.move(piece_id, step_x, step_y)
+                root.after(50, lambda: step_animation(step + 1))
+            else:
+                capture_sound.stop()
+                capture_sound.play()
+                pieces_on_board.pop((start_row, start_col))
+                old_piece_id = pieces_on_board[(target_row, target_col)]
+                canvas.delete(old_piece_id)
+                pieces_on_board[(target_row, target_col)] = piece_id
+                animate_solution(solution, index + 1)
+
+        step_animation()
+
+
+    root.protocol("WM_DELETE_WINDOW", on_close)
     root.mainloop()
 
 testcase(config.NUM_TEST, config.SIZE)
