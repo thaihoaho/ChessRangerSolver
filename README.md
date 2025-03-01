@@ -12,7 +12,9 @@
   ```
 Chạy chương trình:  
 `python main.py`  
-  
+    
+*Nhấn Enter để tìm lời giải (Nên tắt gõ tiếng Việt)*
+*Nhấn space để chạy animation (Nên tắt gõ tiếng Việt)*
 *Thay đổi số quân cờ bằng biến SIZE trong config.py*
   
 Hỗ trợ:  
