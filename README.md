@@ -13,8 +13,11 @@
 Chạy chương trình:  
 `python main.py`  
   
-*Thay đổi số quân cờ bằng biến SIZE trong config.py*
-  
+*Nhấn Enter để tìm lời giải (Nên tắt gõ tiếng Việt)*  
+*Nhấn space để chạy animation (Nên tắt gõ tiếng Việt)*  
+*Thay đổi số quân cờ bằng biến SIZE trong config.py*  
+*Thay đổi kích thước cửa sổ bằng cách kéo phần góc*  
+
 Hỗ trợ:  
 - Nạp puzzle ngẫu nhiên từ bộ testcases.
 - Kéo thả để giải puzzle.
