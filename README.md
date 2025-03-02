@@ -3,7 +3,7 @@
 │── main.py          # File chính
 │── move.py          # Xử lý nước đi  
 │── config.py        # Cấu hình main  
-│── getTest.py       # Lấy testcase từ testcase/  
+│── getTest.py       # Lấy testcase từ https://www.puzzle-chess.com/  
 │── log.txt          # Lời của tất cả testcase tạo bằng main.py  
 │── testcases/       # Chứa các file tests từ 4 đến 11 quân cờ, mỗi file chứa 100 testcases  
 │── assets/          # Ảnh bàn cờ, quân cờ & âm thanh  
@@ -12,11 +12,12 @@
   ```
 Chạy chương trình:  
 `python main.py`  
-    
-*Nhấn Enter để tìm lời giải (Nên tắt gõ tiếng Việt)*
-*Nhấn space để chạy animation (Nên tắt gõ tiếng Việt)*
-*Thay đổi số quân cờ bằng biến SIZE trong config.py*
   
+*Nhấn Enter để tìm lời giải (Nên tắt gõ tiếng Việt)*  
+*Nhấn space để chạy animation (Nên tắt gõ tiếng Việt)*  
+*Thay đổi số quân cờ bằng biến SIZE trong config.py*  
+*Thay đổi kích thước cửa sổ bằng cách kéo phần góc*  
+
 Hỗ trợ:  
 - Nạp puzzle ngẫu nhiên từ bộ testcases.
 - Kéo thả để giải puzzle.
