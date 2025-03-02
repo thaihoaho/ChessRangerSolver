@@ -11,12 +11,16 @@ import heapq
 
 
 def testcase(num_tests, size):
+    print("> Press ENTER to find solution (Should turn off VN-typing)")
+    print("> Press SPACE for animation from solution (Should turn off VN-typing)")
+    print("> Change number of pieces on board by changing SIZE in config.py")
+    print("> Resize window should be done by pulling the CORNER of window to keep it as a square")
     with open("tests/test" + str(size) + ".txt", "r", encoding="utf-8") as file:
         matrices = [eval(line.strip()) for line in file] 
     
     random.seed()  
     for i in range(num_tests):
-        number = random.randint(0, 100)
+        number = random.randint(0, 99)
         print('/' * 20, f'Testcase {number}','/' * 20)
         draw_chessboard_with_background_and_pieces(matrices[number])
 
@@ -107,11 +111,13 @@ def draw_chessboard_with_background_and_pieces(pieces):
 
     def dfs(pieces, start_time, solution, unformatted_solution, depth=1):
         global dfs_time
+
         if len(pieces) == 1:
             dfs_time = time.time() - start_time
-            # solve_sound.stop()
-            # solve_sound.play()
+            solve_sound.stop()
+            solve_sound.play()
             return True
+        
         for (row, col), piece_id in pieces.items():
             target = filter_moves(row, col, pieces)
             if not target:
@@ -124,6 +130,7 @@ def draw_chessboard_with_background_and_pieces(pieces):
                 piece_name = id_to_name[child[(row, col)]].capitalize()
                 target_name = id_to_name[child[(target_x, target_y)]].capitalize()
                 child[(target_x, target_y)] = child.pop((row, col))
+                
                 if dfs(child, start_time, solution, unformatted_solution, depth + 1):
                     unformatted_solution.append((row, col, target_x, target_y))
                     solution.append("   " * depth + f"{piece_name}{num_to_char_col[col]}{8-row} x {target_name}{num_to_char_col[target_y]}{8-target_x}")
@@ -249,7 +256,7 @@ def draw_chessboard_with_background_and_pieces(pieces):
         print(f"‣ DFS : {dfs_time:.6f} seconds")
         while solution:
             print(f"{solution.pop()}")
-        print(unformatted_solution)
+        # /print(unformatted_solution)
         
         s=0
         for i in range(each):
@@ -257,7 +264,7 @@ def draw_chessboard_with_background_and_pieces(pieces):
             s+=a_star_time
             a_star_time=0
         a_star_time=s/each
-        print(f"A* : {a_star_time:.6f} seconds")
+        print(f"‣ A* : {a_star_time:.6f} seconds")
 
         for depth, move in enumerate(solution):
             indent=depth+1
@@ -292,8 +299,10 @@ def draw_chessboard_with_background_and_pieces(pieces):
 
         move = solution[index]
         start_row, start_col, target_row, target_col = move
-        
-        piece_id = pieces_on_board[(start_row, start_col)]
+        try:
+            piece_id = pieces_on_board[(start_row, start_col)]
+        except KeyError:
+            return
         step_x = (target_col - start_col) * (canvas.winfo_width() / 8 ) / 10
         step_y = (target_row - start_row) * (canvas.winfo_height() / 8 ) / 10
 
